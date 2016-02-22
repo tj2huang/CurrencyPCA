@@ -5,21 +5,39 @@ from sklearn.decomposition import PCA
 from matplotlib.backends.backend_pdf import PdfPages
 
 path = __file__[:__file__.find('python')]
+COMPONENTS = 5
 
-data = pd.read_csv(path + '/data/All crosses.csv', index_col='Date')
-data.index = data.index.astype(str)
-data.index = pd.to_datetime(data.index.str[:4].values + '-' + data.index.str[4:6].values +
-                            '-' + data.index.str[6:].values)
-pca = PCA(n_components=3)
-pca.fit(data)
-transformed = pca.transform(data)
-# cumulative_returns = transformed
-cumulative_returns = (1+transformed/100).cumprod(axis=1)
-df_transformed = pd.DataFrame(data=cumulative_returns,  index=data.index).resample('10D', how='prod').add(-1)*100.
-pdf = PdfPages(path + "graph.pdf")
-plt.figure()
-df_transformed[0].plot()
-pdf.savefig()
-plt.close()
-pdf.close()
-print('hi')
+
+def setup(data_path):
+    """
+
+    :param data_path:
+    :return: dataframe
+    """
+    data = pd.read_csv(data_path, index_col='Date')
+    data.index = data.index.astype(str)
+    data.index = pd.to_datetime(data.index.str[:4].values + '-' + data.index.str[4:6].values +
+                                '-' + data.index.str[6:].values)
+    return data
+
+
+def get_components(data):
+    pca = PCA(n_components=COMPONENTS)
+    pca.fit(data)
+    print(pca.components_, pca.explained_variance_ratio_)
+    transformed = pca.transform(data)
+    df_transformed = pd.DataFrame(data=transformed,  index=data.index)
+    return df_transformed
+
+
+def plot(df_transformed):
+    pdf = PdfPages(path + "graph.pdf")
+    plt.figure()
+    df_transformed.plot()
+    pdf.savefig()
+    plt.close()
+    pdf.close()
+
+
+parsed_data = setup(path + '/data/USD crosses.csv')
+plot(get_components(parsed_data))
