@@ -38,6 +38,7 @@ def plot(df_transformed):
     plt.close()
     pdf.close()
 
-
 parsed_data = setup(path + '/data/USD crosses.csv')
+outliers = [filter(lambda x: abs(x[1]) >= 5, zip(parsed_data.index, parsed_data.ix[:, col])) for col in parsed_data.columns]
+ls_outliers = [pd.Series(data=[a[1] for a in x], index=[a[0] for a in x]) for x in outliers]
 plot(get_components(parsed_data))
