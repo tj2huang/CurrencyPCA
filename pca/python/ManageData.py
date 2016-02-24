@@ -5,7 +5,7 @@ from sklearn.decomposition import PCA
 from matplotlib.backends.backend_pdf import PdfPages
 
 path = __file__[:__file__.find('python')]
-COMPONENTS = 5
+COMPONENTS = 3
 OUTLIER_PERCENT = 7
 
 
@@ -25,8 +25,9 @@ def setup(data_path):
 def get_components(data):
     pca = PCA(n_components=COMPONENTS)
     pca.fit(data)
+    new_components = np.array([np.dot(component, ortho_rotation(pca.components_)) for component in pca.components_])
+    pca.components_ = new_components
     print(pca.components_, pca.explained_variance_ratio_)
-    # pca.components_ = ortho_rotation(pca.components_)
     transformed = pca.transform(data)
     df_transformed = pd.DataFrame(data=transformed,  index=data.index)
     return df_transformed
@@ -39,6 +40,8 @@ def plot(df_transformed):
     pdf.savefig()
     plt.close()
     pdf.close()
+
+# https://www.utdallas.edu/~herve/Abdi-rotations-pretty.pdf
 
 
 def ortho_rotation(lam, method='varimax',gamma=None,eps=1e-6, itermax=100):
@@ -70,4 +73,4 @@ outliers = [filter(lambda x: abs(x[1]) >= OUTLIER_PERCENT, zip(parsed_data.index
 ls_outliers = [pd.Series(data=[a[1] for a in x], index=[a[0] for a in x]) for x in outliers]
 merged = pd.concat(ls_outliers)
 parsed_data.drop(merged.index)
-plot(get_components(parsed_data))
+plot(get_components(parsed_data)[0])
